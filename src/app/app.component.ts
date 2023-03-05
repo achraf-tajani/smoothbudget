@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { SupabaseService } from './services';
+import { AppService, SupabaseService } from './services';
 
 @Component({
   selector: 'app-root',
@@ -7,9 +7,19 @@ import { SupabaseService } from './services';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
-  constructor(private supabaseService: SupabaseService) {}
+  user: any;
+  connected = false;
+  constructor(
+    private supabaseService: SupabaseService,
+    private app: AppService
+  ) {}
   ngOnInit(): void {
-    console.log(this.supabaseService.supabase);
+    this.app.currentUserAsObservable().subscribe((user) => {
+      if (Object.keys(user).length > 0) {
+        this.user = user;
+        this.connected = true;
+      }
+    });
   }
   title = 'smoothBudget';
 }

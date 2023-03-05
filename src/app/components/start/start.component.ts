@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { WebcamImage } from 'ngx-webcam';
-import { Observable, Subject } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AppService, SupabaseService } from 'src/app/services';
+import { ScanneComponent } from './scanne/scanne.component';
 
 @Component({
   selector: 'app-start',
@@ -8,21 +10,31 @@ import { Observable, Subject } from 'rxjs';
   styleUrls: ['./start.component.scss'],
 })
 export class StartComponent implements OnInit {
-  private trigger: Subject<any> = new Subject();
-  public webcamImage!: WebcamImage;
   sysImage = '';
-  constructor() {}
+  connected: boolean = false;
+  constructor(
+    public dialog: MatDialog,
+    private appService: AppService,
+    private supabase: SupabaseService,
+    private route: Router
+  ) {}
 
-  ngOnInit(): void {}
-  public get invokeObservable(): Observable<any> {
-    return this.trigger.asObservable();
+  ngOnInit(): void {
+    this.appService.loginQrCodeAsObservable().subscribe((tokenString) => {
+      if (tokenString.length > 0) {
+        this.connected = true;
+        this.supabase
+          .selectReference('budget', tokenString)
+          .then((budget: any) => {
+            this.appService.$curentUser.next(budget.data[0]);
+            this.route.navigate(['/home']);
+          })
+          .catch((e) => console.log(e));
+      }
+    });
   }
-  public captureImg(webcamImage: WebcamImage): void {
-    this.webcamImage = webcamImage;
-    this.sysImage = webcamImage.imageAsDataUrl;
-    console.info('got webcam image', this.sysImage);
-  }
-  public getSnapshot(): void {
-    this.trigger.next(void 0);
+
+  openDialog() {
+    const dialogRef = this.dialog.open(ScanneComponent);
   }
 }
